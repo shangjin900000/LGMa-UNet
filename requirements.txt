@@ -1,0 +1,21 @@
+# LGMa-UNet Python deps (PyTorch + CUDA extensions installed separately; see README)
+easydict==1.13
+h5py==3.14.0
+matplotlib==3.9.4
+numpy==1.26.4
+open3d==0.18.0
+PyYAML==6.0.3
+tensorboardX==2.6.4
+tqdm==4.67.1
+transforms3d==0.4.2
+timm==0.4.5
+scikit-image>=0.19
+
+# SAP Encode2Points local pooling (install a wheel that matches your PyTorch/CUDA)
+# pip install torch-scatter -f https://data.pyg.org/whl/torch-1.13.0+cu117.html
+
+# Build deps for extensions/mamba-1p1p1 (RoLGM Vim BiMamba)
+causal-conv1d==1.2.0.post1
+einops==0.8.1
+packaging==25.0
+ninja==1.13.0

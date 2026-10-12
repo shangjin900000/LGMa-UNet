@@ -1,0 +1,102 @@
+optimizer : {
+  type: AdamW,
+  kwargs: {
+  lr : 0.0004,
+  weight_decay : 0.0005
+}}
+
+scheduler: {
+  type: LambdaLR,
+  kwargs: {
+  decay_step: 20,
+  lr_decay: 0.8,
+  lowest_decay: 0.01
+}}
+
+bnmscheduler: {
+  type: Lambda,
+  kwargs: {
+  decay_step: 20,
+  bn_decay: 0.5,
+  bn_momentum: 0.9,
+  lowest_decay: 0.01
+}}
+
+dataset : {
+  train : { _base_: cfgs/dataset_configs/PCN.yaml,
+            others: {subset: 'train'}},
+  val : { _base_: cfgs/dataset_configs/PCN.yaml,
+            others: {subset: 'test'}},
+  test : { _base_: cfgs/dataset_configs/PCN.yaml,
+            others: {subset: 'test'}}}
+
+# PCN: GT 16384 = 1024 seeds x upscales [1,4,4]; Vim BiMamba v2; DecRoLGM at dec[1] only
+# Requires: pip install -e ./extensions/mamba-1p1p1 (see README)
+# PCN has no separate val split; validation and test both use test split
+model : {
+  NAME: UpTrans,
+  num_pred: 16384,
+  num_seeds: 1024,
+  seed_fea: 128,
+  upscales: [1, 4, 4],
+  l2_loss: 0,
+  # dense_decoder_type: uplayer   # default: PostProcess + UpLayer
+  # dense_decoder_type: fc        # AdaPoinTr FC: coarse seed fixed + relative offsets
+  # dense_global_dim: 1024
+  # dense_fc_hidden: 512
+
+  sa_version: v1,
+  sa_pool_mode: max_avg,
+  sa_geo: {
+    use_distance: true,
+    use_curvature: true,
+    use_linearity: true,
+    use_planarity: true,
+  },
+
+  use_rolgm: true,
+  enc_serial_type: rolgm,
+  rolgm_dim: 128,
+  rolgm: {
+    knn_k: 16,
+    rolgm_cycles: 1,
+    rolgm_per_axis: 1,
+    serialization_orders: [xyz, xzy, yxz, yzx, zxy, zyx],
+    random_serial_one: true,
+    eval_serial_one: true,
+    eval_serial_order: xyz,
+    share_serial_blocks: true,
+    bimamba_type: v2,
+    if_divide_out: true,
+    rms_norm: true,
+    vim_final_norm: true,
+    lm_depth: 1,
+    sm_depth: 1,
+    local_agg: max,
+    shape_branch_mode: prepend_token,
+  },
+
+  dec_fea_refine_type: dec_rolgm,
+  dec_rolgm_stages: [1],
+  dec_pos_hidden: 32,
+
+  encoder_stages: [
+    { npoints: 512, feat_ch: 128, knn: 16, use_rolgm: true },
+    { npoints: 128, feat_ch: 256, knn: 16, use_rolgm: true },
+    { group_all: true, feat_ch: 512, use_rolgm: false, mlp: [384, 512] },
+  ],
+
+  decoder_stages: [
+    { out_ch: 256, up_factor: 64, fuse_bottom: true },
+    { out_ch: 256, up_factor: 2, skip_encoder: 1 },
+    { out_ch: 128, up_factor: 2, skip_encoder: 0, xyz_head: true },
+  ],
+}
+
+# 2-GPU DDP: total_bs must be divisible by 2. bs=32 (16/GPU) may OOM; stable upper bound ~24 (12/GPU)
+total_bs : 16
+step_per_update : 1
+max_epoch : 400
+
+consider_metric: CDL1
+FORCE_DISABLE_CUDNN: true

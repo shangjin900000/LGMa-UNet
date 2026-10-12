@@ -1,0 +1,40 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+.eggs/
+dist/
+build/
+**/build/
+
+# Experiments & weights (do not commit)
+experiments/
+checkpoint/
+checkpoints/
+*.pth
+*.pt
+*.ckpt
+vis_result/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs / TensorBoard
+*.log
+events.out.tfevents.*
+TFBoard/
+
+# Local data blobs (keep only index json/txt under data/)
+data/PCN/train/
+data/PCN/test/
+data/PCN/val/
+data/PCN/valid/
+data/KITTI/cars/
+data/KITTI/bboxes/
+data/ShapeNet55-34/shapenet_pc/
